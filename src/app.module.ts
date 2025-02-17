@@ -1,34 +1,21 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
+import { PrismaModule } from './prisma/prisma.module';
+import { SyncModule } from './sync/sync.module';
+import { MetricsModule } from './metrics/metrics.module';
 import configuration from './config/configuration';
-import { GithubModule } from './integrations/github/github.module';
-import { JiraModule } from './integrations/jira/jira.module';
-import { BambooHRModule } from './integrations/bamboohr/bamboohr.module';
-import { JaveloModule } from './integrations/javelo/javelo.module';
-import { TenantModule } from './tenant/tenant.module';
-import { QueueModule } from './queue/queue.module';
 
 @Module({
-    imports: [
-        ConfigModule.forRoot({
-            isGlobal: true,
-            load: [configuration],
-        }),
-        BullModule.forRoot({
-            redis: {
-                host: process.env.REDIS_HOST,
-                port: parseInt(process.env.REDIS_PORT, 10),
-            },
-        }),
-        ScheduleModule.forRoot(),
-        GithubModule,
-        JiraModule,
-        BambooHRModule,
-        JaveloModule,
-        TenantModule,
-        QueueModule,
-    ],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+    }),
+    ScheduleModule.forRoot(),
+    PrismaModule,
+    SyncModule,
+    MetricsModule,
+  ],
 })
 export class AppModule { }

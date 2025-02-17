@@ -1,31 +1,45 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Octokit } from '@octokit/rest';
 
 @Injectable()
-export class GitHubService {
-    private oktokitInstances: Map<string, Octokit> = new Map();
+export class GitHubService implements OnModuleInit {
+    private oktokitInstance: Octokit;
 
-    async getOctokitForTenant(tenantId: string, credentials: any) {
-        let octokit = this.oktokitInstances.get(tenantId);
+    constructor(private readonly configService: ConfigService) { }
 
-        if (!octokit) {
-            octokit = new Octokit({
-                auth: credentials.githubCredentials.token,
-            });
-            this.oktokitInstances.set(tenantId, octokit);
+    async onModuleInit() {
+        const token = this.configService.get<string>('github.token');
+        if (!token) {
+            throw new Error('GitHub token is not configured');
         }
 
-        return octokit;
+        this.oktokitInstance = new Octokit({
+            auth: token,
+        });
     }
 
-    async fetchUserContributions(tenantId: string, username: string) {
-        const context = await this.tenantService.getTenantContext(tenantId);
-        const octokit = await this.getOctokitForTenant(tenantId, context.credentials);
+    async getRepositories() {
+        const organization = this.configService.get<string>('github.organization');
+        if (!organization) {
+            throw new Error('GitHub organization is not configured');
+        }
 
-        // All operations now use tenant-specific credentials
-        return await octokit.repos.getContributorsStats({
-            owner: context.credentials.githubCredentials.organization,
-            repo: 'your-repo',
+        return this.oktokitInstance.repos.listForOrg({
+            org: organization,
+            type: 'all',
+        });
+    }
+
+    async getContributors(repo: string) {
+        const organization = this.configService.get<string>('github.organization');
+        if (!organization) {
+            throw new Error('GitHub organization is not configured');
+        }
+
+        return this.oktokitInstance.repos.listContributors({
+            owner: organization,
+            repo,
         });
     }
 }

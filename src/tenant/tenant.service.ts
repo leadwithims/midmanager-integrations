@@ -1,67 +1,38 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { RedisService } from '../redis/redis.service';
+import { ConfigService } from '@nestjs/config';
+import { TenantConfig } from './tenant.interface';
 
 @Injectable()
 export class TenantService implements OnModuleInit {
-    private tenantCredentialsCache: Map<string, any> = new Map();
+    private defaultTenant: TenantConfig;
 
-    constructor(
-        private prisma: PrismaService,
-        private redis: RedisService,
-    ) { }
+    constructor(private configService: ConfigService) { }
 
     async onModuleInit() {
-        // Pre-load tenant credentials into cache
-        await this.loadTenantCredentials();
-    }
+        const token = this.configService.get<string>('github.token');
+        const organization = this.configService.get<string>('github.organization');
 
-    private async loadTenantCredentials() {
-        const tenants = await this.prisma.tenant.findMany({
-            include: {
-                TenantCredentials: true,
+        if (!token || !organization) {
+            throw new Error('GitHub configuration is incomplete');
+        }
+
+        this.defaultTenant = {
+            id: 'default',
+            name: 'Default Tenant',
+            integrations: {
+                github: {
+                    token,
+                    organization,
+                },
             },
-        });
-
-        for (const tenant of tenants) {
-            await this.cacheTenantCredentials(tenant.id, tenant.TenantCredentials);
-        }
-    }
-
-    private async cacheTenantCredentials(tenantId: string, credentials: any) {
-        const cacheKey = `tenant:${tenantId}:credentials`;
-        await this.redis.set(cacheKey, JSON.stringify(credentials));
-        this.tenantCredentialsCache.set(tenantId, credentials);
-    }
-
-    async getTenantContext(tenantId: string) {
-        // First check cache
-        let credentials = this.tenantCredentialsCache.get(tenantId);
-
-        if (!credentials) {
-            // Check Redis
-            const cacheKey = `tenant:${tenantId}:credentials`;
-            credentials = await this.redis.get(cacheKey);
-
-            if (!credentials) {
-                // Load from database
-                credentials = await this.prisma.tenantCredentials.findUnique({
-                    where: { tenantId },
-                });
-
-                if (credentials) {
-                    await this.cacheTenantCredentials(tenantId, credentials);
-                }
-            }
-        }
-
-        if (!credentials) {
-            throw new Error(`No credentials found for tenant ${tenantId}`);
-        }
-
-        return {
-            tenantId,
-            credentials,
         };
+    }
+
+    async getTenantConfig(tenantId: string = 'default'): Promise<TenantConfig> {
+        return this.defaultTenant;
+    }
+
+    async validateTenantAccess(tenantId: string): Promise<boolean> {
+        return tenantId === 'default';
     }
 }
