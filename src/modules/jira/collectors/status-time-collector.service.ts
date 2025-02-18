@@ -1,80 +1,69 @@
 import { Injectable } from '@nestjs/common';
-import { BaseJiraCollector } from './base-jira.collector';
-import { StatusTimeAnalyzer } from '../services/status-time-analyzer.service';
-import { TimeTrackingAnalyzer } from '../services/time-tracking-analyzer.service';
-import { JiraMetricMapper } from '../services/jira-metric.mapper';
+import { BaseCollector } from '../../../core/collectors/base.collector';
+import { JiraMetric } from '../dto/jira-metric.dto';
+import { BaseJiraService } from '../services/base-jira.service';
 import { StatusManagerService } from '../services/status-manager.service';
+import { StatusTimeAnalyzer } from '../services/status-time-analyzer.service';
+import { JiraMetricMapper } from '../services/jira-metric.mapper';
+import { TimeTrackingAnalyzer } from '../services/time-tracking-analyzer.service';
 
 @Injectable()
-export class StatusTimeCollectorService extends BaseJiraCollector {
+export class StatusTimeCollectorService extends BaseCollector<JiraMetric> {
   constructor(
-    private readonly statusAnalyzer: StatusTimeAnalyzer,
-    private readonly timeTrackingAnalyzer: TimeTrackingAnalyzer,
-    private readonly metricMapper: JiraMetricMapper,
+    private readonly jiraService: BaseJiraService,
     private readonly statusManager: StatusManagerService,
+    private readonly statusAnalyzer: StatusTimeAnalyzer,
+    private readonly metricMapper: JiraMetricMapper,
+    private readonly timeTrackingAnalyzer: TimeTrackingAnalyzer,
   ) {
-    super(configService);
+    super();
   }
 
-  async collectTimeMetrics() {
-    const startOfMonth = this.getStartOfMonth();
-    
+  async collectMetrics(): Promise<JiraMetric[]> {
     try {
-      const completedIssues = await this.getCompletedIssues(startOfMonth);
-      const metrics = await this.analyzeIssues(completedIssues);
-      
-      await this.saveMetrics(metrics);
-      return metrics;
+      const startOfMonth = this.getStartOfMonth();
+      const jql = `updated >= "${startOfMonth.toISOString()}"`;
+
+      const { issues } = await this.jiraService.jira.searchJira(jql);
+      await this.processIssues(issues);
+
+      return this.metrics;
     } catch (error) {
-      this.handleError('Error collecting time metrics', error);
-      throw error;
+      this.logger.error('Error collecting status time metrics:', error);
+      return [];
     }
   }
 
-  private async analyzeIssues(issues: any[]) {
-    const statusMetrics = await this.collectStatusMetrics(issues);
-    const timeTrackingMetrics = await this.collectMetrics(issues);
-    
-    return [...statusMetrics, ...timeTrackingMetrics];
-  }
-
-  private async collectStatusMetrics(issues: any[]) {
-    const statusMetrics = [];
-
+  private async processIssues(issues: any[]) {
     for (const issue of issues) {
       try {
-        const projectKey = issue.fields.project.key;
-        const activeStatuses = await this.statusManager.getActiveStatuses(projectKey);
-        
-        const changelog = await this.jira.getIssueChangelog(issue.id);
+        const changelog = await this.jiraService.jira.getIssueChangelog(
+          issue.id,
+        );
+        const activeStatuses = await this.statusManager.getActiveStatuses(
+          issue.fields.project.key,
+        );
+
         const statusBreakdown = await this.statusAnalyzer.analyzeIssueStatuses(
           issue,
           changelog,
-          activeStatuses
+          activeStatuses,
         );
 
-        statusMetrics.push(
-          this.metricMapper.mapStatusTimeMetric(statusBreakdown, issue)
+        const metric = this.metricMapper.mapStatusTimeMetric(
+          statusBreakdown,
+          issue,
         );
+        this.addMetric(metric);
       } catch (error) {
-        this.handleError(`Error analyzing status times for issue ${issue.key}`, error);
+        this.logger.warn(`Error processing issue ${issue.key}:`, error);
       }
     }
 
-    return [
-      ...statusMetrics,
-      this.metricMapper.mapAggregateStatusMetric(statusMetrics)
-    ];
-  }
-
-  private async collectMetrics(issues: any[]) {
-    const timeTrackingData = issues.map(issue => ({
-      originalEstimate: issue.fields.timeoriginalestimate || 0,
-      timeSpent: issue.fields.timespent || 0,
-      issueType: issue.fields.issuetype.name
-    }));
-
-    const analysis = this.timeTrackingAnalyzer.analyzeTimeTracking(timeTrackingData);
-    return [this.metricMapper.mapTimeTrackingMetric(analysis, issues.length)];
+    // Add aggregate metrics
+    const aggregateMetric = this.metricMapper.mapAggregateStatusMetric(
+      this.metrics,
+    );
+    this.addMetric(aggregateMetric);
   }
 }

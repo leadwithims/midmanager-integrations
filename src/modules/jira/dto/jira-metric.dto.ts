@@ -1,38 +1,31 @@
-import {
-  IsString,
-  IsNumber,
-  IsDate,
-  IsObject,
-  IsOptional,
-  IsEnum,
-} from 'class-validator';
+import { BaseMetric } from '../../../core/interfaces/metrics/base-metric.interface';
 
 export enum JiraMetricCategory {
-  ISSUES = 'issues',
-  SPRINTS = 'sprints',
-  VELOCITY = 'velocity',
-  WORKLOAD = 'workload',
-  SLA = 'sla',
+  STATUS = 'status',
   TIME_TRACKING = 'time_tracking',
+  SPRINT = 'sprint',
+  WORKLOAD = 'workload',
+  TEAM = 'team'
 }
 
-export class JiraMetricDto {
-  @IsString()
-  metricName: string;
-
-  @IsNumber()
-  value: number;
-
-  @IsString()
-  @IsOptional()
-  unit?: string;
-
-  @IsDate()
-  timestamp: Date;
-
-  @IsEnum(JiraMetricCategory)
+export interface JiraMetric extends BaseMetric {
   category: JiraMetricCategory;
+}
 
-  @IsObject()
-  metadata: Record<string, any>;
+export interface StatusChange {
+  timestamp: Date;
+  fromStatus: string;
+  toStatus: string;
+}
+
+export interface StatusTimeBreakdown {
+  issueKey: string;
+  timeInStatuses: Record<string, number>;
+  totalActiveTime: number;
+}
+
+export interface TimeTrackingData {
+  originalEstimate: number;
+  timeSpent: number;
+  issueType: string;
 }
