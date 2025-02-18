@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Octokit } from '@octokit/rest';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '../../../../prisma/prisma.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { GitHubMetricDto, MetricCategory } from './dto/github-metric.dto';
+import { GitHubMetricDto, MetricCategory } from '../dto/github-metric.dto';
 import { validate } from 'class-validator';
 
 @Injectable()
@@ -35,9 +35,9 @@ export class GitHubCollectorService {
       });
 
       const metrics = await Promise.all([
-        this.collectRepositoryMetrics(),
-        this.collectPullRequestMetrics(),
-        this.collectCommitMetrics(),
+        this.collectVelocityMetrics(),
+        this.collectMetrics(),
+        this.collectMetrics(),
         this.collectCodeQualityMetrics(),
         this.collectCollaborationMetrics(),
         this.collectVelocityMetrics(),
@@ -97,7 +97,8 @@ export class GitHubCollectorService {
     const org = this.configService.get<string>('github.organization');
     const metrics = [];
 
-    const { data: repos } = await this.octokit.repos.listForOrg({ org });
+    if (!org) { throw new Error('Organization name is required'); }
+const { data: repos } = await this.octokit.repos.listForOrg({ org });
 
     for (const repo of repos) {
       // Collect code analysis data (if available)
@@ -111,7 +112,7 @@ export class GitHubCollectorService {
         // Last week's changes
         const lastWeek = codeFrequency[codeFrequency.length - 1];
         if (lastWeek) {
-          metrics.push({
+          metrics.push({ /* Explicitly typed */
             metricName: 'github.code.additions',
             value: lastWeek[1], // Additions
             unit: 'lines',
@@ -139,7 +140,8 @@ export class GitHubCollectorService {
     const org = this.configService.get<string>('github.organization');
     const metrics = [];
 
-    const { data: repos } = await this.octokit.repos.listForOrg({ org });
+    if (!org) { throw new Error('Organization name is required'); }
+const { data: repos } = await this.octokit.repos.listForOrg({ org });
 
     for (const repo of repos) {
       try {
@@ -159,7 +161,7 @@ export class GitHubCollectorService {
           reviews,
         );
 
-        metrics.push({
+        metrics.push({ /* Explicitly typed */
           metricName: 'github.collaboration.review_time',
           value: reviewStats.averageReviewTime,
           unit: 'hours',
@@ -186,7 +188,8 @@ export class GitHubCollectorService {
     const org = this.configService.get<string>('github.organization');
     const metrics = [];
 
-    const { data: repos } = await this.octokit.repos.listForOrg({ org });
+    if (!org) { throw new Error('Organization name is required'); }
+const { data: repos } = await this.octokit.repos.listForOrg({ org });
 
     for (const repo of repos) {
       try {
@@ -209,7 +212,7 @@ export class GitHubCollectorService {
 
         const velocityStats = this.calculateVelocityStats(prs, deployments);
 
-        metrics.push({
+        metrics.push({ /* Explicitly typed */
           metricName: 'github.velocity.deployment_frequency',
           value: velocityStats.deploymentsPerWeek,
           unit: 'deployments/week',

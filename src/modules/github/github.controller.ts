@@ -1,7 +1,7 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
-import { GitHubService } from './github.service';
-import { TenantGuard } from '../../common/guards/tenant.guard';
-import { CurrentTenant } from '../../common/decorators/tenant.decorator';
+import { GitHubService } from './services/github.service'; 
+import { TenantGuard } from '../../core/guards/tenant.guard'; 
+import { CurrentTenant } from '../../core/decorators/tenant.decorator';
 
 @Controller('github')
 @UseGuards(TenantGuard)

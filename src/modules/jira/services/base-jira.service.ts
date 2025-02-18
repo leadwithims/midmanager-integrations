@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as JiraApi from 'jira-client';
-import { IJiraService } from '../../interfaces/services/jira-service.interface';
+import { IJiraService } from '../../../core/interfaces/services/jira-service.interface';
 
 @Injectable()
 export class BaseJiraService implements IJiraService {

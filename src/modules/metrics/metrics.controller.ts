@@ -7,14 +7,14 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { MetricProcessorService } from '../sync/services/metric-processor.service';
-import { ZamolxisApiService } from '../sync/services/zamolxis-api.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { MetricProcessorService } from '../../sync/services/metric-processor.service';
+import { ZamolxisApiService } from '../../sync/services/zamolxis-api.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import {
   MetricError,
   ProcessedMetric,
   MetricsStatus,
-} from './interfaces/metric.interface';
+} from '../../core/interfaces/metric.interface';
 
 @Controller('metrics')
 export class MetricsController {

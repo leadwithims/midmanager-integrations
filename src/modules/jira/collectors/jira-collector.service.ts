@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '../../../../prisma/prisma.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { JiraMetricDto, JiraMetricCategory } from './dto/jira-metric.dto';
+import { JiraMetricDto, JiraMetricCategory } from '../dto/jira-metric.dto';
 import { validate } from 'class-validator';
 import * as JiraApi from 'jira-client';
 

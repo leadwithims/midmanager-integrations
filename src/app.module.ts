@@ -3,8 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from '../prisma/prisma.module';
 import { SyncModule } from './sync/sync.module';
-import { MetricsModule } from './metrics/metrics.module';
-import configuration from './config/configuration';
+import { MetricsModule } from './modules/metrics/metrics.module';
+import { GitHubModule } from './modules/github/github.module';
+import { JiraModule } from './modules/jira/jira.module';
+import configuration from './core/config/configuration';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import configuration from './config/configuration';
     PrismaModule,
     SyncModule,
     MetricsModule,
+    GitHubModule,
+    JiraModule,
   ],
 })
 export class AppModule { }

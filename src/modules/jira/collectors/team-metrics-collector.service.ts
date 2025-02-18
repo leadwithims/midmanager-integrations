@@ -1,4 +1,3 @@
-// src/collectors/jira/services/team-metrics-collector.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../../../prisma/prisma.service';
@@ -45,7 +44,7 @@ export class TeamMetricsCollectorService {
     try {
       // First, fetch and cache team data
       await this.fetchTeams();
-      
+
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
@@ -126,7 +125,7 @@ export class TeamMetricsCollectorService {
 
     // Collect completed issues for the team
     const completedIssues = await this.getTeamCompletedIssues(team, startDate);
-    
+
     // Collect time tracking data
     const timeTrackingData = await this.getTeamTimeTracking(team, startDate);
 
@@ -240,7 +239,7 @@ export class TeamMetricsCollectorService {
         }
       );
 
-      return response.data.values.filter(log => 
+      return response.data.values.filter(log =>
         team.members.some(member => member.accountId === log.author.accountId)
       );
     } catch (error) {
@@ -252,7 +251,7 @@ export class TeamMetricsCollectorService {
   private calculateTeamEfficiency(timeTracking: any[], issues: any[]): number {
     const totalTimeSpent = timeTracking.reduce((acc, log) => acc + log.timeSpentSeconds, 0);
     const totalEstimated = issues.reduce((acc, issue) => acc + (issue.fields.timeoriginalestimate || 0), 0);
-    
+
     return totalEstimated > 0 ? (totalTimeSpent / totalEstimated) * 100 : 0;
   }
 

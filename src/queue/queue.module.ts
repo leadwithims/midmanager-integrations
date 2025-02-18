@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GithubProcessor } from './processors/github.processor';
-import { GitHubModule } from '../integrations/github/github.module';
+import { GitHubModule } from '../modules/github/github.module';
 import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({

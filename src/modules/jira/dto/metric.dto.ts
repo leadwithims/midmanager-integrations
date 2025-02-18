@@ -6,9 +6,18 @@ import {
   IsOptional,
   IsEnum,
 } from 'class-validator';
-import { MetricCategory } from '../../../../core/constants/metrics.constants';
 
-export class BaseMetricDto {
+export enum JiraMetricCategory {
+  ISSUES = 'issues',
+  SPRINTS = 'sprints',
+  VELOCITY = 'velocity',
+  WORKLOAD = 'workload',
+  TIME_TRACKING = 'time_tracking',
+  STATUS = 'status',
+  TEAM = 'team',
+}
+
+export class JiraMetricDto {
   @IsString()
   metricName: string;
 
@@ -22,8 +31,8 @@ export class BaseMetricDto {
   @IsDate()
   timestamp: Date;
 
-  @IsEnum(MetricCategory)
-  category: MetricCategory;
+  @IsEnum(JiraMetricCategory)
+  category: JiraMetricCategory;
 
   @IsObject()
   metadata: Record<string, any>;

@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Processor, Process } from '@nestjs/bull';
 import { Job } from 'bull';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { GitHubService } from '../../integrations/github/github.service';
+import { GitHubService } from '../../modules/github/services/github.service';
 
 interface SyncMetricsJobData {
   tenantId: string;
