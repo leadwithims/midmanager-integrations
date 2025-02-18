@@ -1,34 +1,70 @@
+# docker-compose.yml
 version: '3.8'
+
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3005:3005"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_ORGANIZATION=${GITHUB_ORGANIZATION}
+      - ZAMOLXIS_API_ENABLED=${ZAMOLXIS_API_ENABLED}
+      - ZAMOLXIS_API_URL=${ZAMOLXIS_API_URL}
+      - ZAMOLXIS_API_TOKEN=${ZAMOLXIS_API_TOKEN}
     depends_on:
       - redis
       - postgres
-    volumes:
-      - ./tenant-credentials:/app/credentials:ro
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3005/metrics/status" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   redis:
-    image: redis:alpine
-    command: redis-server --appendonly yes
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
     volumes:
-      - redis_data:/data
+      - redis-data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   postgres:
-    image: postgres:17
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
+    networks:
+      - app-network
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
-  redis_data:
-  postgres_data:
-  tenant-credentials:
+  redis-data:
+  postgres-data:

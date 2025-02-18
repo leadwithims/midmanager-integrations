@@ -6,18 +6,18 @@ import { CurrentTenant } from '../../common/decorators/tenant.decorator';
 @Controller('github')
 @UseGuards(TenantGuard)
 export class GitHubController {
-    constructor(private readonly githubService: GitHubService) { }
+  constructor(private readonly githubService: GitHubService) {}
 
-    @Get('repositories')
-    async getRepositories(@CurrentTenant() tenantId: string) {
-        return this.githubService.getRepositories();
-    }
+  @Get('repositories')
+  async getRepositories(@CurrentTenant() tenantId: string) {
+    return this.githubService.getRepositories();
+  }
 
-    @Get('repositories/:repo/contributors')
-    async getContributors(
-        @CurrentTenant() tenantId: string,
-        @Param('repo') repo: string,
-    ) {
-        return this.githubService.getContributors(repo);
-    }
+  @Get('repositories/:repo/contributors')
+  async getContributors(
+    @CurrentTenant() tenantId: string,
+    @Param('repo') repo: string,
+  ) {
+    return this.githubService.getContributors(repo);
+  }
 }

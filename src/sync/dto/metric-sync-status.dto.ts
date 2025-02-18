@@ -1,5 +1,5 @@
 export enum SyncStatus {
-    PENDING = 'PENDING',
-    SYNCED = 'SYNCED',
-    FAILED = 'FAILED'
+  PENDING = 'PENDING',
+  SYNCED = 'SYNCED',
+  FAILED = 'FAILED',
 }

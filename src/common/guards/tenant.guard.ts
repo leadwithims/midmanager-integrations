@@ -3,12 +3,12 @@ import { TenantService } from '../../tenant/tenant.service';
 
 @Injectable()
 export class TenantGuard implements CanActivate {
-    constructor(private tenantService: TenantService) { }
+  constructor(private tenantService: TenantService) {}
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
-        const request = context.switchToHttp().getRequest();
-        const tenantId = request.headers['x-tenant-id'] || 'default';
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const tenantId = request.headers['x-tenant-id'] || 'default';
 
-        return this.tenantService.validateTenantAccess(tenantId);
-    }
+    return this.tenantService.validateTenantAccess(tenantId);
+  }
 }

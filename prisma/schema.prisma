@@ -1,0 +1,78 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model EngineeringMetric {
+    id         String   @id @default(uuid())
+    metricName String
+    value      Float
+    unit       String?
+    timestamp  DateTime
+    category   String?
+    metadata   Json?
+    source     String // e.g., 'github', 'jira'
+
+    // Processing status
+    processed       Boolean   @default(false)
+    processedAt     DateTime?
+    processedData   Json?
+    processError    String?
+    processAttempts Int       @default(0)
+    readyForSync    Boolean   @default(false)
+
+    // Sync status
+    syncStatus  String    @default("PENDING") // PENDING, SYNCED, FAILED
+    syncedAt    DateTime?
+    syncError   String?
+    retryCount  Int       @default(0)
+    lastRetryAt DateTime?
+
+    // Tenant information
+    tenantId String
+
+    // Metadata
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([processed, createdAt])
+    @@index([readyForSync, syncStatus])
+    @@index([metricName, timestamp])
+    @@index([tenantId])
+    @@index([source, timestamp])
+}
+
+// Track GitHub metric collection runs
+model GitHubSyncRun {
+    id           String    @id @default(uuid())
+    startTime    DateTime
+    endTime      DateTime?
+    status       String // RUNNING, COMPLETED, FAILED
+    errorMessage String?
+    metricsCount Int       @default(0)
+    tenantId     String
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+
+    @@index([tenantId, status])
+    @@index([startTime])
+}
+
+model JiraSyncRun {
+    id           String    @id @default(uuid())
+    startTime    DateTime
+    endTime      DateTime?
+    status       String // RUNNING, COMPLETED, FAILED
+    errorMessage String?
+    metricsCount Int       @default(0)
+    tenantId     String
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+
+    @@index([tenantId, status])
+    @@index([startTime])
+}

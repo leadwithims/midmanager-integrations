@@ -1,5 +1,5 @@
 export class GithubMetricsDto {
-    repositoryCount: number;
-    repositoryList: string[];
-    timestamp: Date;
+  repositoryCount: number;
+  repositoryList: string[];
+  timestamp: Date;
 }
